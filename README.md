@@ -28,14 +28,29 @@ SELECT a.name, b.name FROM some_table a JOIN another_table b ON a.some_id = b.so
 <br />
 
 1. Get all invoices where the `unit_price` on the `invoice_line` is greater than $0.99.
+  SELECT i.* FROM invoice i JOIN invoice_line l ON i.invoice_id = l.invoice_id WHERE l.unit_price > 0.99;
+  
 2. Get the `invoice_date`, customer `first_name` and `last_name`, and `total` from all invoices.
+  SELECT i.invoice_date, c.first_name, c.last_name, i.total FROM invoice i JOIN customer c ON i.customer_id = c.customer_id
+
 3. Get the customer `first_name` and `last_name` and the support rep's `first_name` and `last_name` from all customers. 
     * Support reps are on the employee table.
+      SELECT c.first_name, c.last_name, e.first_name, e.last_name FROM customer c JOIN employee e ON c.support_rep_id = e.employee_id
+
 4. Get the album `title` and the artist `name` from all albums.
+  SELECT al.title, a.name FROM album al JOIN artist a ON a.artist_id = al.artist_id
+
 5. Get all playlist_track track_ids where the playlist `name` is Music.
+  SELECT pl.track_id FROM playlist_track pl JOIN playlist p ON pl.playlist_id = p.playlist_id WHERE p.name IN ('Music')
+
 6. Get all track `name`s for `playlist_id` 5.
+  SELECT t.name FROM track t JOIN playlist_track pl ON t.track_id = pl.track_id WHERE pl.playlist_id = 5
+
 7. Get all track `name`s and the playlist `name` that they're on ( 2 joins ).
+  SELECT t.name, p.name FROM track t JOIN playlist_track pl ON t.track_id = pl.track_id JOIN playlist p ON pl.playlist_id = p.playlist_id
+
 8. Get all track `name`s and album `title`s that are the genre `Alternative & Punk` ( 2 joins ).
+  SELECT t.name, al.title FROM genre g JOIN track t ON t.genre_id = g.genre_id JOIN album al ON al.album_id = t.album_id WHERE g.name = 'Alternative & Punk'
 
 ### Solution
 
@@ -151,6 +166,14 @@ WHERE g.name = 'Alternative & Punk';
 
 * Get all tracks on the playlist(s) called Music and show their name, genre name, album name, and artist name.
   * At least 5 joins.
+    SELECT t.name as track_name, g.name as genre_name, al.title as album_name, art.name as artist_name
+      FROM playlist p 
+        JOIN playlist_track pt ON p.playlist_id = pt.playlist_id
+        JOIN track t ON pt.track_id = t.track_id
+        JOIN album al ON al.album_id = t.album_id
+        JOIN artist art ON art.artist_id = al.artist_id
+        JOIN genre g ON t.genre_id = g.genre_id
+          WHERE p.name = 'Music'
 
 
 ## Practice nested queries
@@ -178,11 +201,22 @@ SELECT name, Email FROM Athlete WHERE AthleteId IN ( SELECT PersonId FROM PieEat
 <br />
 
 1. Get all invoices where the `unit_price` on the `invoice_line` is greater than $0.99.
+  SELECT * FROM invoice WHERE invoice_id IN ( SELECT invoice_id FROM invoice_line WHERE unit_price > 0.99 )
+
 2. Get all playlist tracks where the playlist name is Music.
+  SELECT * FROM playlist_track WHERE playlist_id IN (SELECT playlist_id FROM playlist WHERE name = 'Music' )
+
 3. Get all track names for `playlist_id` 5.
+  SELECT name FROM track WHERE track_id IN (SELECT track_id FROM playlist_track WHERE playlist_id = 5)
+
 4. Get all tracks where the `genre` is Comedy.
-5. Get all tracks where the `album` is Fireball.
+  SELECT * FROM track WHERE genre_id IN (SELECT genre_id FROM genre WHERE name = 'Comedy')
+
+5. Get all tracks where the `album` is Fireball. 
+  SELECT * FROM track WHERE album_id IN (SELECT album_id FROM album WHERE title = 'Fireball')
+
 6. Get all tracks for the artist Queen ( 2 nested subqueries ).
+  SELECT * FROM track WHERE album_id IN ( SELECT album_id FROM album WHERE artist_id IN (SELECT artist_id FROM artist arist WHERE name='Queen'))
 
 ### Solution
 
@@ -289,10 +323,20 @@ UPDATE athletes SET sport = 'Picklball' WHERE sport = 'pockleball';
 <br />
 
 1. Find all customers with fax numbers and set those numbers to `null`.
+  UPDATE customer SET fax = null WHERE fax IS NOT null
+
 2. Find all customers with no company (null) and set their company to `"Self"`.
+  UPDATE customer SET company = 'Self' WHERE company IS null
+
 3. Find the customer `Julia Barnett` and change her last name to `Thompson`.
+  UPDATE customer SET last_name = 'Thompson' WHERE first_name ='Julia' AND last_name = 'Barnett'
+
 4. Find the customer with this email `luisrojas@yahoo.cl` and change his support rep to `4`.
+  UPDATE customer SET support_rep_id = 4 WHERE email = 'luisrojas@yahoo.cl'
+
 5. Find all tracks that are the genre `Metal` and have no composer. Set the composer to `"The darkness around us"`.
+  UPDATE track SET composer = 'The darkness around us' WHERE genre_id IN (SELECT genre_id FROM genre WHERE name = 'Metal') AND composer IS null
+
 6. Refresh your page to remove all database changes.
 
 ### Solution
@@ -383,8 +427,13 @@ GROUP BY [column];
 <br />
 
 1. Find a count of how many tracks there are per genre. Display the genre name with the count.
+  SELECT COUNT(*), g.name FROM track t JOIN genre g ON t.genre_id = g.genre_id GROUP BY g.name 
+
 2. Find a count of how many tracks are the `"Pop"` genre and how many tracks are the `"Rock"` genre.
+  SELECT COUNT(*), g.name FROM track t JOIN genre g ON t.genre_id = g.genre_id WHERE g.name IN ('Pop', 'Rock') GROUP BY g.name 
+
 3. Find a list of all artists and how many albums they have.
+  SELECT COUNT(*), a.name FROM artist a JOIN album al ON al.artist_id = a.artist_id GROUP BY a.name
 
 ### Solution
 
@@ -450,8 +499,13 @@ FROM [table];
 <br />
 
 1. From the `track` table find a unique list of all `composer`s.
+  SELECT DISTINCT composer FROM track
+
 2. From the `invoice` table find a unique list of all `billing_postal_code`s.
+  SELECT DISTINCT billing_postal_code FROM invoice
+
 3. From the `customer` table find a unique list of all `company`s.
+  SELECT DISTINCT company FROM customer
 
 <details>
 
@@ -535,8 +589,13 @@ DELETE FROM [table] WHERE [condition]
 
 1. Copy, paste, and run the SQL code from the summary.
 2. Delete all `'bronze'` entries from the table.
+  DELETE FROM practice_delete WHERE type='bronze'
+
 3. Delete all `'silver'` entries from the table.
+  DELETE FROM practice_delete WHERE type='silver'
+
 4. Delete all entries whose value is equal to `150`.
+  DELETE FROM practice_delete WHERE value=150
 
 ### Solution
 
@@ -597,12 +656,31 @@ Let's simulate an e-commerce site. We're going to need users, products, and orde
 ### Instructions
 
 * Create 3 tables following the criteria in the summary.
+    CREATE TABLE users (user_id SERIAL PRIMARY KEY, name VARCHAR(50), email VARCHAR(100));
+
+  CREATE TABLE products (product_id SERIAL PRIMARY KEY, name VARCHAR(50), price REAL);
+
+  CREATE TABLE cart (cart_id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(user_id));
+
+  CREATE TABLE order_items (order_items_id SERIAL PRIMARY KEY, cart_id INT REFERENCES cart(cart_id), product_id INT REFERENCES products(product_id));
+
 * Add some data to fill up each table.
   * At least 3 users, 3 products, 3 orders.
+    INSERT INTO users (name, email) VALUES ('bobby', 'bobby@b.com'), ('bobbyjr1', 'bobby@b1.com'), ('bobbyhe2', 'bobby@b2.com')
+    INSERT INTO products (name, price) VALUES ('Broccoli', 2.49), ('Carrots', 1.50), ('Celery', 0.48);
+    INSERT INTO CART (user_id) VALUES (1), (1), (3);
+    INSERT INTO order_items (cart_id, product_id) VALUES (1, 1), (1, 2), (1, 3), (2, 2), (3, 3);
+
 * Run queries against your data.
   * Get all products for the first order.
+    SELECT p.* FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN cart c ON c.cart_id = oi.cart_id WHERE c.cart_id = 1
+
   * Get all orders.
+    SELECT c.cart_id, p.* FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN cart c ON c.cart_id = oi.cart_id ORDER BY c.cart_id
+
   * Get the total cost of an order ( sum the price of all products on an order ).
+    SELECT c.cart_id, SUM(p.price) FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN cart c ON c.cart_id = oi.cart_id GROUP BY c.cart_id
+
 * Add a foreign key reference from orders to users.
 * Update the orders table to link a user to each order.
 * Run queries against your data.
@@ -612,6 +690,8 @@ Let's simulate an e-commerce site. We're going to need users, products, and orde
 ### Black Diamond
 
 * Get the total amount on all orders for each user.
+
+  SELECT c.user_id, SUM(p.price) FROM products p JOIN order_items oi ON p.product_id = oi.product_id JOIN cart c ON c.cart_id = oi.cart_id GROUP BY c.user_id
 
 ### Resources
 
